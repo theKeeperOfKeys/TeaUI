@@ -7,12 +7,17 @@
 
 import Foundation
 
-func crashHandler(signum: Int32) -> Void {
+func crashHandler(signum: Int32, originalTerminal: termios?) -> Void {
+	guard let originalTerminal else {
+		signal(signum, SIG_DFL)
+		raise(signum)
+		return
+	}
+	
 	TUI.exitAltBuffer()
 	
-	if var mutableOriginalTerminal = TUI.originalTerminal {
-		tcsetattr(STDIN_FILENO, TCSAFLUSH, &mutableOriginalTerminal)
-	}
+	var mutableOriginalTerminal = originalTerminal
+	tcsetattr(STDIN_FILENO, TCSAFLUSH, &mutableOriginalTerminal)
 	
 	fputs("\n\rPROGRAM PANIC.\n\r", stderr)
 	fputs("(terminal restored)\n\r", stderr)

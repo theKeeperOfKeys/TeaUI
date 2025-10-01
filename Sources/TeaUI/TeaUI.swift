@@ -15,6 +15,12 @@ import Glibc
 #endif
 
 
+// I could find no other way.
+// If you have a better solution, by all means please add it!
+// (This is a cry for help)
+nonisolated(unsafe) private var globalOriginalTerminal: termios?
+
+
 public actor TUI {
 	/// A stream that can be passed to subprocesses so they can update the view when they make a meaningful change.
 	private let (taskStream, taskContinuation) = AsyncStream<Event>.makeStream()
@@ -66,21 +72,12 @@ public actor TUI {
 	/// Subprocesses.
 	private var eventListeners = [Task<Void, Never>]()
 	
-	/// A static variable set the first time any TUI sets up the terminal. Static so that the crash handler can safely use it.
-	public static private(set) var originalTerminal: termios?
-	
 	public init(initialModel: any Model) {
 		model = initialModel
 	}
 	
 	/// Sets up the terminal for a TUI by enabling raw mode, entering an alternative buffer, and setting other flags that are useful for a TUI.
 	func prepareTerminal() throws {
-		guard TUI.originalTerminal == nil else {
-			// terminal already prepared. Do nothing
-			return
-		}
-		
-		
 		var originalTerm = termios()
 		guard isatty(STDIN_FILENO) != 0 else { // ensure that we're actually running in a terminal
 			throw TerminalError.notATerminal
@@ -105,14 +102,14 @@ public actor TUI {
 			throw TerminalError.failedToSetTerminalSetting
 		}
 		
-		TUI.originalTerminal = originalTerm
+		globalOriginalTerminal = originalTerm
 		
 		// set up crash handlers
 		for sig in [SIGINT, SIGHUP, SIGABRT, SIGTRAP, SIGQUIT, SIGSEGV] {
 			signal(sig) { sig in
-				crashHandler(signum: sig)
-				// I would so love to have the crash handlers here or in this class rather than a seperate function...
-				// ...but I just can't seem to pass the original into the closure safely.
+				crashHandler(signum: sig, originalTerminal: globalOriginalTerminal)
+				// I would so love to have the crash handler here or in this class rather than a seperate function...
+				// ...but I just can't seem to make it so it doesn't capture context.
 			}
 		}
 		
@@ -123,13 +120,13 @@ public actor TUI {
 	}
 	
 	
-	/// I do not need to document this.
+	/// I should not need to document this.
 	static func enterAltBuffer() {
 		print("\u{1b}[?1049h", terminator: "")
 	}
 	
 	
-	/// I do not need to document this.
+	/// I should not need to document this.
 	static func exitAltBuffer() {
 		print("\u{1b}[?1049l", terminator: "") // exit alternative buffer
 		print("\u{001B}[?25h", terminator: "") // show cursor
@@ -140,7 +137,7 @@ public actor TUI {
 	private func restoreTerminal() {
 		TUI.exitAltBuffer()
 
-		guard var mutableOrigionalTerminal = TUI.originalTerminal else {
+		guard var mutableOrigionalTerminal = globalOriginalTerminal else {
 			return
 		}
 		
