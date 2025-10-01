@@ -10,7 +10,7 @@ public struct Selector: FocusableModel {
 	/// The index of the currently selected options.
 	public var selectionIdx: Int = 0
 	/// The selected options.
-	public var selected: String { options[selectionIdx] }
+	public var selected: String? { options.isEmpty ? nil : options[selectionIdx] }
 	/// The options to choose from.
 	public let options: [String]
 
@@ -56,19 +56,19 @@ public struct Selector: FocusableModel {
 	}
 	
 	public var body: String {
-		let selected = options[selectionIdx]
-		let formattedSelected = isFocused ? "\u{001B}[7m" + selected + "\u{001B}[0m" : selected
-		
 		let isFirst = selectionIdx == 0
-		let isLast = selectionIdx == options.count - 1
+		let isLast = selectionIdx == options.count - 1 || options.isEmpty
 		
 		let LArrow = !isFirst ? (isFocused ? "\u{001B}[36m⯇\u{001B}[0m" : "⯇") : "⯇"
 		let RArrow = !isLast ? (isFocused ? "\u{001B}[36m⯈\u{001B}[0m" : "⯈") : "⯈"
+		
+		let selected = options.isEmpty ? "\u{001B}[90mno options...\u{001B}[0m" : options[selectionIdx]
+		let formattedSelected = isFocused ? "\u{001B}[7m" + selected + "\u{001B}[0m" : selected
 		
 		// Thought about adding a preview for the next and previous item.. but it takes up a lot of space.
 //		let LItem = !isFirst ? "\(options[selectionIdx - 1].description) ": "\u{001B}[90m[begin]\u{001B}[0m "
 //		let RItem = !isLast ? " \(options[selectionIdx + 1].description)" : " \u{001B}[90m[end]\u{001B}[0m"
 		
-		return "\(LArrow) \(formattedSelected) \(RArrow) [\(selectionIdx + 1)/\(options.count)]"
+		return "\(LArrow) \(formattedSelected) \(RArrow) [\(options.isEmpty ? 0 : selectionIdx + 1)/\(options.count)]"
 	}
 }

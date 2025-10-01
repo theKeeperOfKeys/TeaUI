@@ -186,7 +186,7 @@ struct PremadesModel: FocusManager {
 \(Fmt.bold)-- Here's how you can use the values of the objects --\(Fmt.reset)
 Value of both spinners combined: \(spinner1.value + spinner2.value) 
 Characters in Text Field 1: \(textField1.value.count)
-Chosen item in selector: \(selector.selected) (index \(selector.selectionIdx))
+Chosen item in selector: \(selector.selected ?? "nil") (index \(selector.selectionIdx))
 Average value of checkboxes: \(checkBox1.isChecked && checkBox2.isChecked ? "true" : (checkBox1.isChecked != checkBox2.isChecked ? "trulse" : "false"))
 Switch is on: \(switch1.isChecked ? "yep": "nope")
 Mode: \(mode ? "\(Clr.green)1" : "\(Clr.magenta)2")\(Fmt.reset) (No effect. Example only. Change with buttons)
