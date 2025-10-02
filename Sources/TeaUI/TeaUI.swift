@@ -192,7 +192,7 @@ public actor TUI {
 		
 		restoreTerminal()
 		
-		print(exitStr)
+		print(exitStr.replacingOccurrences(of: "\n", with: "\n\r"))
 	}
 }
 
