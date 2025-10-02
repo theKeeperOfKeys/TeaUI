@@ -40,6 +40,13 @@ public struct TextField: FocusableModel {
 						}
 					}
 					newState.value.append(char)
+				case .space:
+					if let maxChars {
+						guard value.count < maxChars else {
+							return (newState, nil)
+						}
+					}
+					newState.value.append(" ")
 				case .return:
 					return (self, FocusCommand.next)
 				default: break
